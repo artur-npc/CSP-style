@@ -1,216 +1,61 @@
-<!DOCTYPE html>                                                                                                                                                                    
+ <!DOCTYPE html>
   <html lang="en">                                                                                                                                                                   
-  <head>                                                                                                                                                                             
-    <meta charset="UTF-8">
-    <title>EUD-3448 — Inline-style CSP compliance test</title>                                                                                                                       
-                                                                                                                                                                                     
-    <!--                                                                                                                                                                             
-      Strict CSP for EUD-3448 verification.                                                                                                                                          
-      style-src includes 'nonce-abc123xyz' for SDK-injected <style> tags (fixed by EUD-5237)
-      but DOES NOT include 'unsafe-inline' or 'unsafe-hashes'.                                                                                                                       
-      Any leftover style="..." HTML attribute in CMP templates will be blocked.                                                                                                      
-    -->                                                                                                                                                                              
-    <meta http-equiv="Content-Security-Policy"                                                                                                                                       
-          content="
-            default-src 'self';                                                                                                                                                      
-            script-src 'nonce-abc123xyz' 'strict-dynamic' https:;
-            style-src 'self' 'nonce-abc123xyz';                                                                                                                                      
-            img-src 'self' data: https:;
-            font-src 'self' data: https:;                                                                                                                                            
-            connect-src 'self' https:;
-            frame-src 'self' https:;                                                                                                                                                 
-          ">  
-
+  <head>
+    <meta charset="UTF-8">                                                                                                                                                           
+    <title>EUD-3448 — Toggle layout</title>
+    <meta http-equiv="Content-Security-Policy" content="                                                                                                                             
+      default-src 'self';
+      script-src 'nonce-abc123xyz' 'strict-dynamic' https:;                                                                                                                          
+      style-src 'self' 'nonce-abc123xyz';                                                                                                                                            
+      img-src 'self' data: https:;
+      font-src 'self' data: https:;                                                                                                                                                  
+      connect-src 'self' https:;                                                                                                                                                     
+      frame-src 'self' https:;">
     <style nonce="abc123xyz">                                                                                                                                                        
-      body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-      h1 { font-size: 1.4rem; }                                                                                                                                                      
-      .controls { background: #f5f5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
-      .controls form { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }                                                                                           
-      .controls label { font-size: 0.85rem; color: #555; display: flex; flex-direction: column; gap: 0.2rem; }
-      .controls input, .controls select { padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }                                               
-      .controls input[type="text"] { width: 14rem; }                                                                                                                                 
-      .controls input[type="number"] { width: 6rem; }                                                                                                                                
-      .controls button { padding: 0.45rem 0.9rem; background: #4a4ae4; color: white; border: none; border-radius: 4px; cursor: pointer; align-self: end; }                           
-      .controls button:hover { background: #3a3ac4; }                                                                                                                                
-      .presets { margin-top: 0.75rem; }                                                                                                                                              
-      .presets a { display: inline-block; margin: 0.25rem 0.5rem 0.25rem 0; padding: 0.35rem 0.6rem; background: white; border: 1px solid #ccc; border-radius: 4px; text-decoration: 
-  none; color: #333; font-size: 0.85rem; }                                                                                                                                           
-      .status { padding: 1rem; border-radius: 6px; margin: 1rem 0; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; }
-      .status.ok { background: #e8f5e9; border: 1px solid #4caf50; }                                                                                                                 
-      .status.fail { background: #ffebee; border: 1px solid #f44336; }                                                                                                               
-      code { background: #eee; padding: 0.1em 0.3em; border-radius: 3px; }                                                                                                           
-      .meta { font-size: 0.85rem; color: #555; margin: 0.5rem 0; }                                                                                                                   
-      ul { line-height: 1.6; }
+      body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      #status { padding: 1rem; border-radius: 6px; margin: 1rem 0; font-family: monospace; }                                                                                         
+      #status.ok { background: #e8f5e9; border: 1px solid #4caf50; }                                                                                                                 
+      #status.fail { background: #ffebee; border: 1px solid #f44336; white-space: pre-wrap; }                                                                                        
     </style>                                                                                                                                                                         
-              
-    <!--                                                                                                                                                                             
-      CMP loader. Always served from the same PR sandbox URL.
-      Only data-sandbox="1" is conditional — added when the settingsId belongs to the sandbox environment.
-    -->                                                                                                                                                                              
-    <script nonce="abc123xyz">
-      const DEFAULT_PR = '1332';                                                                                                                                                     
-              
-      const params = new URL(location.href).searchParams;                                                                                                                            
-      const settingsId = params.get('settingsId') || '';
-      const isSandbox = params.get('sandbox') === '1';                                                                                                                               
-      const pr = params.get('pr') || DEFAULT_PR;
-                                                                                                                                                                                     
-      if (settingsId) {                                                                                                                                                              
-        const loader = document.createElement('script');
-        loader.id = 'usercentrics-cmp';                                                                                                                                              
-        loader.src = `https://web.cmp.usercentrics-sandbox.eu/ui/pr/${pr}/loader.js`;
-        loader.async = true;                                                                                                                                                         
-        loader.nonce = 'abc123xyz';
-        loader.setAttribute('data-settings-id', settingsId);                                                                                                                         
-        if (isSandbox) loader.setAttribute('data-sandbox', '1');                                                                                                                     
-        document.head.appendChild(loader);
-      }                                                                                                                                                                              
-              
-      window.__loaderInfo = { settingsId, isSandbox, pr };                                                                                                                           
+    <script nonce="abc123xyz">                                                                                                                                                       
+      const SETTINGS_ID = 'YOUR_SETTINGS_ID';                                                                                                                                        
+      const PR_NUMBER   = '1332';                                                                                                                                                    
+      const loader = document.createElement('script');
+      loader.id = 'usercentrics-cmp';                                                                                                                                                
+      loader.src = `https://web.cmp.usercentrics-sandbox.eu/ui/pr/${PR_NUMBER}/loader.js`;                                                                                           
+      loader.async = true;
+      loader.nonce = 'abc123xyz';                                                                                                                                                    
+      loader.setAttribute('data-settings-id', SETTINGS_ID);
+      // loader.setAttribute('data-sandbox', '1');  // uncomment if SETTINGS_ID is from sandbox                                                                                      
+      document.head.appendChild(loader);                                                                                                                                             
     </script>
   </head>                                                                                                                                                                            
   <body>      
-    <h1>EUD-3448 — Inline-style CSP compliance test</h1>
-
-    <div class="controls">                                                                                                                                                           
-      <form method="get">
-        <label>settingsId                                                                                                                                                            
-          <input type="text" name="settingsId" placeholder="H1Vl9isio" required>
-        </label>
-        <label>sandbox settings?                                                                                                                                                     
-          <select name="sandbox">
-            <option value="">no (production settings ID)</option>                                                                                                                    
-            <option value="1">yes (sandbox settings ID)</option>                                                                                                                     
-          </select>
-        </label>                                                                                                                                                                     
-        <label>PR
-          <input type="number" name="pr" placeholder="1332">
-        </label>                                                                                                                                                                     
-        <button type="submit">Reload</button>
-      </form>                                                                                                                                                                        
-              
-      <div class="presets">
-        <strong>Presets:</strong><br>
-        <a href="?settingsId=H1Vl9isio">CB GDPR (prod settings)</a>
-        <a href="?settingsId=BY5PdhNXF">CB TCF (prod settings)</a>                                                                                                                   
-        <a href="?settingsId=HTrWecvQcUoC94&sandbox=1">Custom (sandbox settings)</a>                                                                                                 
-        <a href="?settingsId=YOUR_WIX_ID">Wix toggle layout</a>                                                                                                                      
-        <a href="?settingsId=YOUR_TV_AV_ID">TV Age Verification</a>                                                                                                                  
-        <a href="?settingsId=YOUR_UC_AV_ID">UC Age Verification</a>
-        <a href="?settingsId=YOUR_TV_PB_ID">TV Privacy Button</a>                                                                                                                    
-        <p style="font-size:0.8rem;color:#666;margin-top:0.5rem;">                                                                                                                   
-          Replace <code>YOUR_*</code> placeholders with real config IDs.                                                                                                             
-        </p>                                                                                                                                                                         
-      </div>  
-    </div>                                                                                                                                                                           
-              
-    <div class="meta">
-      <strong>Loaded with:</strong>
-      settingsId=<code id="meta-sid"></code> ·                                                                                                                                       
-      data-sandbox=<code id="meta-sandbox"></code> ·                                                                                                                                 
-      PR=<code id="meta-pr"></code><br>                                                                                                                                              
-      <strong>Loader URL:</strong> <code id="meta-url"></code>                                                                                                                       
-    </div>    
-                                                                                                                                                                                     
-    <div class="status" id="status">Watching the console for CSP violations… open DevTools → Console.</div>                                                                          
-   
-    <h2>What to verify on each configuration</h2>                                                                                                                                    
-    <ul>      
-      <li><strong>Toggle layout (CB &amp; Wix):</strong> open the banner, expand to second layer. Toggles must render correctly for 1–6 categories. No <code>--count</code> in an    
-  inline style.</li>                                                                                                                                                                 
-      <li><strong>Age Verification logo (TV &amp; UC):</strong> logo must be the size configured in admin. Height comes from a JS property, not an HTML <code>style</code>
-  attribute.</li>                                                                                                                                                                    
-      <li><strong>TV Privacy Button hidden:</strong> when in Privacy Button view, <code>#uc-main-dialog</code> must be hidden via a class, not
-  <code>style="display:none"</code>.</li>                                                                                                                                            
-      <li><strong>No CSP errors:</strong> the status banner above must stay green — zero <code>style-src</code> violations.</li>
-    </ul>                                                                                                                                                                            
-              
-    <h2>Quick console helpers</h2>                                                                                                                                                   
-    <ul>      
-      <li><code>findInlineStyles()</code> — list all elements that still carry a <code>style="..."</code> HTML attribute.</li>                                                       
-      <li><code>checkToggleCount()</code> — verify <code>cnt-N</code> class is applied instead of inline <code>--count</code>.</li>
-      <li><code>checkAvLogo()</code> — verify Age Verification image height is applied via JS property, not HTML attribute.</li>                                                     
-      <li><code>checkTvHidden()</code> — verify TV Privacy Button uses class <code>tv-privacy-button-hidden</code>, not <code>style="display:none"</code>.</li>
-    </ul>                                                                                                                                                                            
-                                                                                                                                                                                     
+    <h1>EUD-3448 — Toggle layout (CB &amp; Wix, 1–6 categories)</h1>
+    <p>Open the banner, expand to second layer. Verify the toggle grid renders correctly for 1–6 categories. No inline <code>--count</code> on toggle wrappers.</p>                  
+    <div id="status">Watching CSP violations…</div>                                                                                                                                  
+    <p>Run <code>checkToggleCount()</code> in the console.</p>                                                                                                                       
     <script nonce="abc123xyz">                                                                                                                                                       
-      const info = window.__loaderInfo;                                                                                                                                              
-      document.getElementById('meta-sid').textContent = info.settingsId || '(none)';
-      document.getElementById('meta-sandbox').textContent = info.isSandbox ? '"1"' : '(not set)';                                                                                    
-      document.getElementById('meta-pr').textContent = info.pr;
-      document.getElementById('meta-url').textContent =                                                                                                                              
-        info.settingsId ? `https://web.cmp.usercentrics-sandbox.eu/ui/pr/${info.pr}/loader.js` : '(no settingsId — pass ?settingsId=...)';
-                                                                                                                                                                                     
-      document.querySelector('input[name="settingsId"]').value = info.settingsId;                                                                                                    
-      document.querySelector('select[name="sandbox"]').value = info.isSandbox ? '1' : '';                                                                                            
-      document.querySelector('input[name="pr"]').value = info.pr;                                                                                                                    
-                                                                                                                                                                                     
-      window.__cspViolations = [];
-      document.addEventListener('securitypolicyviolation', (e) => {                                                                                                                  
-        window.__cspViolations.push({                                                                                                                                                
-          directive: e.violatedDirective,
-          sample: e.sample,                                                                                                                                                          
-          sourceFile: e.sourceFile,
-          lineNumber: e.lineNumber,
-        });                                                                                                                                                                          
-        renderStatus();
-      });                                                                                                                                                                            
-              
-      function renderStatus() {
+      const violations = [];                                                                                                                                                         
+      document.addEventListener('securitypolicyviolation', (e) => {
+        if (e.violatedDirective.startsWith('style-src')) violations.push(e);                                                                                                         
+        render();                                                                                                                                                                    
+      });
+      function render() {                                                                                                                                                            
         const el = document.getElementById('status');
-        const styleViolations = window.__cspViolations.filter(v => v.directive.startsWith('style-src'));
-        if (styleViolations.length === 0) {                                                                                                                                          
-          el.className = 'status ok';
-          el.textContent = 'OK — no style-src CSP violations detected so far.';                                                                                                      
-        } else {                                                                                                                                                                     
-          el.className = 'status fail';
-          el.textContent =                                                                                                                                                           
-            `FAIL — ${styleViolations.length} style-src violation(s):\n` +
-            styleViolations.map((v, i) => `${i + 1}. directive=${v.directive}; sample="${v.sample || ''}"; at ${v.sourceFile}:${v.lineNumber}`).join('\n');                          
-        }                                                                                                                                                                            
+        if (!violations.length) { el.className = 'ok'; el.textContent = 'OK — no style-src violations'; }
+        else { el.className = 'fail'; el.textContent = `FAIL — ${violations.length} violation(s):\n` +                                                                               
+          violations.map(v => `${v.violatedDirective}: "${v.sample || ''}" @ ${v.sourceFile}:${v.lineNumber}`).join('\n'); }                                                         
       }                                                                                                                                                                              
-      renderStatus();                                                                                                                                                                
-              
-      window.findInlineStyles = () => {
-        const cmp = document.getElementById('usercentrics-cmp-ui');
-        const all = [];                                                                                                                                                              
-        document.querySelectorAll('[style]').forEach(el => all.push({ root: 'document', el, raw: el.getAttribute('style') }));
-        cmp?.shadowRoot?.querySelectorAll('[style]').forEach(el => all.push({ root: 'shadow', el, raw: el.getAttribute('style') }));                                                 
-        console.table(all.map(x => ({ root: x.root, tag: x.el.tagName, classes: x.el.className, style: x.raw })));                                                                   
-        return all;                                                                                                                                                                  
-      };                                                                                                                                                                             
-                                                                                                                                                                                     
-      window.checkToggleCount = () => {
-        const cmp = document.getElementById('usercentrics-cmp-ui');
-        const wrappers = cmp?.shadowRoot?.querySelectorAll('.toggle-wrapper') ?? [];
+      render();                                                                                                                                                                      
+      window.checkToggleCount = () => {                                                                                                                                              
+        const wrappers = document.getElementById('usercentrics-cmp-ui')?.shadowRoot?.querySelectorAll('.toggle-wrapper') ?? [];                                                      
         console.table([...wrappers].map(w => ({                                                                                                                                      
-          classes: w.className,
+          classes: w.className,                                                                                                                                                      
           inlineStyle: w.getAttribute('style') || '(none)',                                                                                                                          
-          countVar: getComputedStyle(w).getPropertyValue('--count').trim(),                                                                                                          
-        })));
-      };                                                                                                                                                                             
-              
-      window.checkAvLogo = () => {                                                                                                                                                   
-        const cmp = document.getElementById('usercentrics-cmp-ui');
-        const imgs = cmp?.shadowRoot?.querySelectorAll('img[data-uc-img-height]') ?? [];                                                                                             
-        console.table([...imgs].map(img => ({                                                                                                                                        
-          dataAttr: img.dataset.ucImgHeight,
-          inlineStyleAttr: img.getAttribute('style') || '(none)',                                                                                                                    
-          renderedHeight: img.style.height,                                                                                                                                          
-        })));
-      };                                                                                                                                                                             
-              
-      window.checkTvHidden = () => {
-        const cmp = document.getElementById('usercentrics-cmp-ui');
-        const dialog = cmp?.shadowRoot?.querySelector('#uc-main-dialog');                                                                                                            
-        if (!dialog) return console.warn('No #uc-main-dialog found yet — banner not rendered.');
-        console.table([{                                                                                                                                                             
-          classes: dialog.className,
-          hasHiddenClass: dialog.classList.contains('tv-privacy-button-hidden'),                                                                                                     
-          inlineStyle: dialog.getAttribute('style') || '(none)',                                                                                                                     
-          computedDisplay: getComputedStyle(dialog).display,
-        }]);                                                                                                                                                                         
-      };      
+          countVar: getComputedStyle(w).getPropertyValue('--count').trim(),
+        })));                                                                                                                                                                        
+      };
     </script>                                                                                                                                                                        
   </body>     
   </html>
