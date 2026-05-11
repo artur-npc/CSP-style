@@ -49,7 +49,8 @@
       loader.id = 'usercentrics-cmp';                                                                                                                                                
       loader.src = 'https://web.cmp.usercentrics-sandbox.eu/ui/pr/1468/loader.js';                                                                                                                   
       loader.nonce = 'abc123xyz';
-      loader.setAttribute('data-settings-id', settingsId);                                                                                                                           
+      loader.setAttribute('data-settings-id', settingsId);
+      loader.setAttribute('data-sandbox', '1'); 
       document.head.appendChild(loader);
     </script>                                                                                                                                                                        
   </head>     
